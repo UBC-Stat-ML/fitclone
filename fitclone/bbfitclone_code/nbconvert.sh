@@ -1,0 +1,1 @@
+jupyter nbconvert --to script Utilities.ipynb Models.ipynb scalable_computing.ipynb pgas-dir.ipynb data_generator.ipynb experiments-prediction.ipynb pgas.ipynb extended_wf_model.ipynb conditional_experiments.ipynb SC_DLP_sa501_exp.ipynb paper_experiments_dlp.ipynb 
