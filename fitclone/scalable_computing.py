@@ -30,7 +30,6 @@ import pickle
 import os
 import itertools
 import numpy as np
-#import time
 import string
 import random
 import profile
@@ -39,29 +38,7 @@ import sys
 from time import *
 import time
 
-"""
-try:
-    env = os.environ['HOST']
-except:
-    env = 'AZURECN'
-fitness_dir = ''
-if env == '' or env is None: env = 'local'
-if env == 'local': fitness_dir = '/Users/sohrab/Google Drive/Masters/Thesis/scripts/fitness'
-elif env == 'beast': fitness_dir = '/home/ssalehi/projects/fitness'
-elif env == 'rocks3': fitness_dir = '/home/ssalehi/projects/fitness'
-elif env == 'grex': fitness_dir = '/home/sohrab/projects/fitness'
-elif env == 'bugaboo': fitness_dir = '/home/sohrab/projects/fitness'
-elif env == 'shahlab': fitness_dir = '/scratch/shahlab_tmp/ssalehi/fitness'
-elif env == 'MOMAC39': fitness_dir = '/Users/ssalehi/projects/fitness'
-elif env == 'azure': fitness_dir = '/home/ssalehi/projects/fitness'
-elif env == 'noah': fitness_dir = '/Users/sohrabsalehi/projects/fitness'
-else:
-    fitness_dir = '.'
-    print('On unrecognised environment. Doing nothing.')
-"""
 fitness_dir = '.'
-print('On unrecognised environment. Doing nothing.')
-
 os.chdir(fitness_dir)
 sys.path.insert(0, fitness_dir)
 
@@ -87,7 +64,7 @@ class Configurable(object):
         self.configs = config_dict
     
     def get_test_path():
-         return('/Users/ssalehi/projects/fitness/scripts/parameters/config.yaml') 
+         return('../data/sa501_config.yaml') 
     
     def test():
         bb = Configurable(Configurable.get_test_path())
@@ -103,17 +80,7 @@ class Env_setup():
     
     def get_batch_dir():
         env = os.environ['HOST']
-        if env == '' or env is None: env = 'local'
-        if env == 'local': return('/Users/sohrab/Google Drive/Masters/Thesis/scripts/fitness/batch_runs')
-        elif env == 'noah': return('/Users/sohrabsalehi/projects/fitness/batch_runs')
-        elif env == 'AZURECN': return('.')
-        elif env == 'grex': return('/global/scratch/sohrab/fitness/batch_runs')
-        elif env == 'bugaboo': return('/global/scratch/sohrab/fitness/batch_runs')
-        elif env == 'shahlab': return('/scratch/shahlab_tmp/ssalehi/fitness/batch_runs')
-        elif env == 'MOMAC39': return('/Users/ssalehi/projects/fitness/batch_runs')
-        else:
-            print('On unrecognised environment. Setting to current dir.')
-            return('.')
+        return('.')
     
     def get_simulated_data_path():
         return(get_path(some_path="wright_fisher_experiments/simulated_data"))

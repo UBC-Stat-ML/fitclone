@@ -73,7 +73,6 @@ class GP_sampler:
             print('the_trajectory.shape = ', the_trajectory['value'].shape)
             Xi = the_trajectory['value'][0:tau, ]
             return(Xi)
-        print('Generati.ng gp.regressor sample:')
         time_mesh = np.linspace(0, time_length, tau)
         for k in range(self.K):
             means, stds = self.gps[k].predict(time_mesh.reshape(-1,1), return_std=True)
@@ -208,7 +207,6 @@ class OutterPGAS(ParticleGibbs):
             
     def sample_initial_values(self):
         # Initialise
-        print('in sample_initial_values')
         self.x[:, :] = self.p0.sample_full_path(self.x0[0,], self.h, self.time_length, self.tau)
         try:
             self.theta[:] = self.q0.sample()

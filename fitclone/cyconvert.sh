@@ -1,3 +1,5 @@
+#!/bin/bash
+
 rm *.c
 rm -rf build 
 export cythonCC="gcc"
