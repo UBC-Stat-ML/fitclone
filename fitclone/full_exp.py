@@ -19,32 +19,11 @@ class Bayesian_learning_exp(Experiment):
     def _post_process(self):
         try:
             absolute_path = ''
-            try:
-                env = os.environ['HOST']
-            except:
-                env = 'AZURECN'
-            if env == '' or env is None: env = 'AZURECN'
-            if env == 'local': absolute_path = ''
-            elif env == 'MOMAC39': absolute_path = ''
-            elif env == 'grex': absolute_path = ''
-            elif env == 'shahlab': absolute_path = '/gsc/software/linux-x86_64-centos6/R-3.2.3/bin/'
-            
-            if env == 'AZURECN':
-                print('Summarising for the AZURECN node...')
-                try:
-                    shared_dir = os.path.join(os.environ['AZ_BATCH_NODE_STARTUP_DIR'], 'wd')
-                except:
-                    shared_dir = '/mnt/batch/tasks/startup/wd'
-
-                subprocess.call(["sudo", "{}Rscript".format(absolute_path), "--vanilla", os.path.join(shared_dir, "time_series_summariser_exp.R"), os.path.realpath(self.out_path)])
-                subprocess.call(["cat", '{}/{}'.format(self.out_path, 'predictsummary.yaml')])
-            else:
-                subprocess.call(["{}Rscript".format(absolute_path), "--vanilla", "time_series_driver_exp.R", self.out_path])
-                subprocess.call(["cat", '{}/{}'.format(self.out_path, 'predictsummary.yaml')])
+            subprocess.call(["{}Rscript".format(absolute_path), "--vanilla", "time_series_driver_exp.R", self.out_path])
+            #subprocess.call(["cat", '{}/{}'.format(self.out_path, 'predictsummary.yaml')])
         except Exception as e:
             print('Some error happened while trying to call Rscript {}'.format(e))
     
-            
     def get_dependencies(self):
         return(['scalable_computing.py', 'pgas-dir.py', 'experiments-prediction.py'])
     

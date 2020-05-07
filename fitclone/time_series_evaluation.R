@@ -39,7 +39,6 @@ ts_utils_get_closest <- function(values, some_array) {
 }
 
 
-# Source e.g., http://www.geosci-model-dev.net/7/1247/2014/gmd-7-1247-2014.pdf
 compute_RMSE_for_exp <- function(exp_path, for_inference=F, burn_in_fraction=.10, thinning=1) {
   burn_in = burn_in_fraction
   
@@ -146,16 +145,8 @@ compute_RMSE_for_exp <- function(exp_path, for_inference=F, burn_in_fraction=.10
   
   file_name = file.path(exp_path, paste0(exp_kind, 'summary', '.yaml'))
   writeLines(yml, file_name)
-  #write.table(df, file.path(exp_path, paste0(exp_kind, '_summary', '.tsv')), sep='\t', row.names = F)
   return(res)
 }
-
-#ss = compute_RMSE_for_exp(exp_path = '/Users/ssalehi/Desktop/pgas_sanity_check/exp_201706-19-185106')
-#ss = compute_RMSE_for_exp(exp_path = '/Users/ssalehi/Desktop/pgas_sanity_check/exp_OM489_201706-26-16226.085942', burn_in_fraction = 2)
-#sss = compute_RMSE_for_exp(exp_path = '/Users/ssalehi/Desktop/pgas_sanity_check/exp_OM489_201706-26-16226.085942', burn_in_fraction = 10)
-#print(ss$rmse_infer_before_learn_time )
-#print(sss$rmse_infer_before_learn_time)
-
 
 compute_MAE_for_exp <- function(exp_path, burn_in_fraction=.10, thinning=1) {
   # Read the inferred theta
@@ -194,59 +185,4 @@ handle_plots_for_exp <- function(exp_path) {
   system(cmd_string)
 }
 
-eval_all_for_batch <- function(batch_path, burn_in_fraction=.10, thinning=1) {
-  dirs = list.dirs(file.path(batch_path, 'outputs'), full.names = T, recursive = F)
-  for (dir in dirs) {
-    is_err = tryCatch({
-      compute_RMSE_for_exp(dir, burn_in_fraction = burn_in_fraction, thinning=thinning)
-      compute_MAE_for_exp(dir, burn_in_fraction = burn_in_fraction, thinning=thinning)
-    }, error=function(err) {
-      print(sprintf('Error - %s', err))
-      errMsg <- err
-    })
-    
-    if(inherits(is_err, "error")) next
-  }
-}
 
-
-handle_all_for_batch <- function(batch_path) {
-  dirs = list.dirs(file.path(batch_path, 'outputs'), full.names = T, recursive = F)
-  for (dir in dirs) {
-    if (!dir.exists(file.path(dir, 'plots'))) next
-    is_err = tryCatch({
-      #compute_RMSE_for_exp(dir)
-      handle_plots_for_exp(dir)
-    }, error=function(err) {
-      print(sprintf('Error - %s', err))
-      errMsg <- err
-    })
-    
-    if(inherits(is_err, "error")) next
-  }
-  
-  cmd_string = sprintf('tar -czf %s.gz -C %s .', file.path(batch_path, 'outputs/plots/'), file.path(batch_path, 'outputs/plots/'))
-  print(cmd_string)
-  system(cmd_string)
-}
-
-
-#exp_path='/Users/ssalehi/Desktop/pgas_sanity_check/exp_5RXP4_201707-19-16801.571058/'
-#compute_RMSE_for_exp(exp_path)
-#compute_MAE_for_exp(exp_path)
-
-#eval_all_for_batch('/shahlab/ssalehi/scratch/fitness/batch_runs/TenKmore_201706-25-234420.450537')
-#handle_all_for_batch('/shahlab/ssalehi/scratch/fitness/batch_runs/TenKmore_201706-25-234420.450537')
-
-#compute_RMSE_for_exp(exp_path = '/Users/ssalehi/Desktop/pgas_sanity_check/not_too_bad_either_exp_IEQH5_201706-28-14014.234892', for_inference = T)
-#compute_RMSE_for_exp(exp_path = '/Users/ssalehi/Desktop/pgas_sanity_check/exp_IEQH5_201706-28-15559.928666', for_inference = T)
-#compute_RMSE_for_exp(exp_path = '/Users/ssalehi/Desktop/pgas_sanity_check/exp_IEQH5_201706-28-171112.650169', for_inference = T)
-#compute_RMSE_for_exp(exp_path = '/Users/ssalehi/Desktop/pgas_sanity_check/exp_IEQH5_201706-28-171112.650169', for_inference = T)
-
-#compute_RMSE_for_exp(exp_path = '/Users/ssalehi/Desktop/pgas_sanity_check/exp_IEQH5_201707-07-215713.414551', for_inference = T)
-
-
-
-#compute_RMSE_for_exp(exp_path="/Users/sohrab/Desktop/testplots/o_0_0_OKXPI_201707-11-01828.021046")
-
-#eval_all_for_batch(batch_path='/Users/ssalehi/Desktop/pgas_sanity_check/K2500short_201707-03-134111.238639', burn_in_fraction=10)
