@@ -279,9 +279,6 @@ def read_h_for_Ne(file_path, dat_path):
     print(dat)
     
     base = [os.path.splitext(os.path.basename(x))[0] for x in dat.file_name.values]
-    print('{}{}'.format('base', base))
-    print('{}{}'.format('dat_path', dat_path))
-    print(dat.h[[os.path.basename(dat_path) == t for t in base]])
     return(float(dat.h[[os.path.basename(dat_path) == t for t in base]]))
     
 def read_last_time_point(file_path, pred_index=0):

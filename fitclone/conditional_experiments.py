@@ -1,6 +1,6 @@
 import os
 import time
-exec(open('SC_DLP_sa501_exp.py').read())
+exec(open('full_exp.py').read())
 exec(open('extended_wf_model.py').read())
 
 
@@ -209,9 +209,7 @@ class CondExp(ConditionalBayesianLearning):
         return(params)
 
     def logic(self, resume):
-        print('before self._load_data')
         self._load_data(resume)
-        print('after self._load_data')
         last_theta, last_x = self._infer(resume)
         res_theta = TimeSeriesDataUtility.read_time_series(self.inference_theta_file_path).values
 

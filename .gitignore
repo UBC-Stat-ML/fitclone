@@ -1,3 +1,7 @@
 *.c
 *.so
 results_*
+build*
+__pycache__
+temp
+.DS_Store  

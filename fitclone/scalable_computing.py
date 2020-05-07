@@ -667,9 +667,7 @@ class Experiment(Configurable):
         
         self._save_config()
         startTime = int(round(time.time()))
-        print('before self.logic')
         res = self.logic(resume)
-        print('after self.logic')
         endTime = int(round(time.time()))  
         self.configs['run_time'] = endTime-startTime
         self.configs['run_time_str'] = time_string_from_seconds(endTime-startTime)

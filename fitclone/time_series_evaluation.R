@@ -1,17 +1,4 @@
 # set environment
-env <- Sys.getenv('HOST')
-if (env == '') env <- 'AZURECN'
-switch(env, local=setwd('/Users/sohrab/Google Drive/Masters/Thesis/scripts/fitness'),
-       beast=setwd('/home/ssalehi/projects/fitness'),
-       AZURECN=setwd('/mnt/batch/tasks/startup/wd'),
-       rocks3=setwd('/home/ssalehi/projects/fitness'),
-       grex=setwd('/home/sohrab/projects/fitness'),
-       bugaboo=setwd('/home/sohrab/projects/fitness'),
-       shahlab=setwd('/scratch/shahlab_tmp/ssalehi/fitness'),
-       azure=setwd('/home/ssalehi/projects/fitness'),
-       noah=setwd('/Users/sohrabsalehi/projects/fitness'),
-       MOMAC39=setwd('/Users/ssalehi/projects/fitness'))
-
 
 source('time_series_utils.R')
 library(reshape2)

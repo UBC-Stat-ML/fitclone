@@ -1,7 +1,7 @@
 import os
 import time
 
-exec(open('SC_DLP_sa501_exp.py').read())
+exec(open('full_exp.py').read())
 exec(open('extended_wf_model.py').read())
 
 class ConditionalBayesianLearning(Bayesian_learning_exp):

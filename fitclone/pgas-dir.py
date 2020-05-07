@@ -73,23 +73,18 @@ class GP_sampler:
             print('the_trajectory.shape = ', the_trajectory['value'].shape)
             Xi = the_trajectory['value'][0:tau, ]
             return(Xi)
-        print('Generati.ng gp.regressor sample 2:')
-        print('oldline')
+        print('Generati.ng gp.regressor sample:')
         time_mesh = np.linspace(0, time_length, tau)
-        print('next line')
         for k in range(self.K):
             means, stds = self.gps[k].predict(time_mesh.reshape(-1,1), return_std=True)
             Xi[:, k] = sp.stats.norm.rvs(loc=means.reshape(tau), scale=stds).reshape(tau)
             Xi[Xi[:, k] < 0, k] = -Xi[Xi[:, k] < 0, k]
-        print('HERe')
         for t in range(tau):
             if np.sum(Xi[t, ]) > 1:
                 Xi[t,] /= np.sum(Xi[t,])            
-        print('Xi!')
         return(Xi)
     
     def sample(self, x, deltaT, t):
-        print('getting sample pgas-dir.py')
         """
             x is a K by 1 array 
         """
