@@ -1,7 +1,8 @@
 import os
 import time
 import numpy as np
-from random import random
+import random
+# from random import random
 
 # exec(open('full_exp.py').read())
 # exec(open('extended_wf_model.py').read())
@@ -274,7 +275,7 @@ class CondExp(ConditionalBayesianLearning):
 
     def logic(self, resume):
         self._load_data(resume)
-        last_theta, last_x = self._infer(resume)
+        _, _ = self._infer(resume)
         res_theta = TimeSeriesDataUtility.read_time_series(
             self.inference_theta_file_path).values
         self._predict(xprime=None, theta_vector=res_theta, resume=resume)

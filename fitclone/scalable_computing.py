@@ -30,6 +30,7 @@ import pickle
 import os
 import itertools
 import numpy as np
+import pandas as pn
 import string
 import random
 import profile
@@ -42,8 +43,8 @@ fitness_dir = '.'
 os.chdir(fitness_dir)
 sys.path.insert(0, fitness_dir)
 
-exec(open('Utilities.py').read())
-
+#exec(open('Utilities.py').read())
+from Utilities import TimeSeriesDataUtility, time_string_from_seconds
 
 class Configurable(object):
     """
@@ -64,7 +65,7 @@ class Configurable(object):
         self.configs = config_dict
     
     def get_test_path():
-         return('../data/sa501_config.yaml') 
+        return('../data/sa501_config.yaml') 
     
     def test():
         bb = Configurable(Configurable.get_test_path())

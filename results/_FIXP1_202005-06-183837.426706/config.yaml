@@ -1,0 +1,28 @@
+K: 1
+K_prime: 4
+MCMC_in_Gibbs_nIter: 20
+Ne: 500
+bridge_n_cores: 1
+do_predict: 0
+gp_epsilon: 0.005
+gp_n_opt_restarts: 20
+h: 0.1
+infer_epsilon: 0.025
+infer_epsilon_tolerance: 0
+inference_n_iter: 100
+learn_time: 1.2
+lower_s: -10
+multinomial_error: false
+n_cores: 1
+obs_num: 6
+one_step: false
+original_data: ../data/SA501/fractions/SA501_clone_fractions.tsv
+out_path: ../results/_FIXP1_202005-06-183837.426706
+pf_n_particles: 100
+pf_n_theta: 50
+pgas_n_particles: 100
+proposal_step_sigma: [0.025, 0.025, 0.025, 0.025]
+rejuvenaion_prob: 1
+seed: 70
+true_x0: [0.42112125868690475, 0.10256939082931406, 0.029992607701921473, 0.19326294873370334]
+upper_s: 10

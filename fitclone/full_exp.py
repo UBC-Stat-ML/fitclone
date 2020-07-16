@@ -1,9 +1,16 @@
 import os
 import subprocess
 import time
+import yaml
+import numpy as np
+from random import random
 
-exec(open('scalable_computing.py').read())
-exec(open('pgas_dir.py').read())
+#exec(open('scalable_computing.py').read())
+#exec(open('pgas_dir.py').read())
+
+from scalable_computing import Experiment
+from Utilities import TimeSeriesDataUtility
+from Models import WrightFisherDiffusion
 
 # Standard Prediction/Inference experiment
 class BayesianLearningExp(Experiment):
@@ -37,8 +44,8 @@ class BayesianLearningExp(Experiment):
     
     def _compute_one_step_h(self, time_points):
         h = np.empty([len(time_points), 1])
-        for time in range(1, len(time_points)+1):
-            h[time] = time_points[time] - time_points[time-1]
+        for tt in range(1, len(time_points)+1):
+            h[tt] = time_points[tt] - time_points[tt-1]
         return(h)
         
     

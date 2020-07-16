@@ -4,21 +4,24 @@ import numpy as np
 import scipy as sp
 import scipy.stats
 import math
-import pyximport
+#import pyximport
 
 # exec(open('Utilities.py').read())
 from Utilities import TimeSeriesDataUtility
-from pgas import _TOLERATED_ZERO_PRECISION
 
+#from epsilon_ball_posterior_parallel import epsilon_ball_sample_posterior_parallel
+#from gaussian_emission_parallel import gaussian_emission_parallel
+
+    
 from epsilon_ball_emission_parallel import *
 from epsilon_ball_posterior_parallel import *
-#from epsilon_ball_posterior_parallel import epsilon_ball_sample_posterior_parallel
 from wf_sample_parallel import *
 from gaussian_emission_parallel import *
-#from gaussian_emission_parallel import gaussian_emission_parallel
 from gp_llhood_parallel import *
 
+# Global Constants
 _TIME_ROUNDING_ACCURACY = 7
+_TOLERATED_ZERO_PRECISION = 1e-20
 
 
 class GenericDistribution:
@@ -445,8 +448,8 @@ class WrightFisherDiffusion(GenericDistribution):
             
         
     
-    # Used to compute llhood of the trajectory (OuterPGAS) 
     def compute_loglikelihood(self, x, s, ignore_before=None, ignore_after=None):
+        """ Used to compute llhood of the trajectory (OuterPGAS) """
         N, K = x.shape # N here is actaully tau, i.e., number of discretisations
         # Either N = len(h): using one-step method
         # Or, h is fixed

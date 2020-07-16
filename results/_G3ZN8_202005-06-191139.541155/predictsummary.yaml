@@ -1,0 +1,9 @@
+rmse_after_learn_time: .nan
+rmse: 0.03693
+indiv_dim:
+  full_rmse:
+    s0: 0.0182442
+    s1: 0.0240578
+    s2: 0.0117902
+    s3: 0.017697
+

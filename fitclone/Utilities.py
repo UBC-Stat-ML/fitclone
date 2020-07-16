@@ -1,6 +1,9 @@
+"""A collection of utility modules, including importing and exporting data.frames."""
 import os
 import pandas as pn
 import xarray as xr
+import numpy as np
+import yaml
 import pickle
 
 
@@ -44,9 +47,10 @@ def quick_load(file_path):
 
 class TimeSeriesDataUtility:
     '''Read time series data in tall format, frmo '''
-    def __init__(self, file_path):
+    def __init__(self):
         print('hello')
     
+    @staticmethod
     def parse_meta_data(input_path):
         """
         Grabs the commented by # lines at the begining of the document
@@ -63,23 +67,28 @@ class TimeSeriesDataUtility:
         lines = [x.replace('#', '') for x in lines] 
         return(yaml.load(''.join(lines)))
     
+    @staticmethod
     def save_multidim_array(arr, dims, attr_name, output_path, use_index=True, use_header=True):
         x_ar = xr.DataArray(arr, dims=dims, name=attr_name)
         df = x_ar.to_dataframe()
         TimeSeriesDataUtility.save_time_series(df=df, output_path=output_path, use_index=use_index, use_header=use_header)
     
+    @staticmethod
     def save_NTK(arr, output_path, use_index=True, use_header=True):
         TimeSeriesDataUtility.save_multidim_array(arr, dims=['n', 'time', 'K'] , attr_name='X', output_path=output_path, use_index=use_index, use_header=use_header)
     
+    @staticmethod
     def save_time_series(df, output_path, use_index=True, use_header=True):
         df.to_csv('{}.gz'.format(output_path), sep='\t', mode='a', compression='gzip', index=use_index, header=use_header)
         
+    @staticmethod
     def read_time_series(input_path):
         if not os.path.isfile(input_path):
             input_path += '.gz'
         dat = pn.read_csv(input_path, sep='\t', index_col=None, comment='#')
         return(dat)
     
+    @staticmethod
     def count_to_percentage(dat):
         # At every time, sum of X should be 1
         time_points = dat.loc[:, 'time'].unique()
@@ -87,8 +96,9 @@ class TimeSeriesDataUtility:
             dat.loc[dat.time == t, 'X'] = dat.loc[:, 'X'][dat.time == t]/np.sum(dat.loc[:, 'X'][dat.time == t])
         return(dat)
     
-    # from tallFormat to N*T*K ndarray
+    @staticmethod
     def tall_to_TK(dat):
+        """ from tallFormat to N*T*K ndarray """
         time_points = np.array(dat.loc[:, 'time'].unique(), np.float128)
         T = len(time_points)
         K = len(dat.loc[:, 'K'].unique())
@@ -99,6 +109,7 @@ class TimeSeriesDataUtility:
         
         return({'times':time_points, 'value':tmp})
     
+    @staticmethod
     def list_TK_to_tall(dat_list, times=None, base_index=0):
         dfs = []
         for i in range(len(dat_list)):
@@ -107,7 +118,7 @@ class TimeSeriesDataUtility:
             dfs.append(df)        
         return(pn.concat(dfs))
             
-        
+    @staticmethod        
     def TK_to_tall(dat, times=None):
         df = pn.DataFrame(data = dat, columns=range(0, dat.shape[1]), index=range(0, dat.shape[0]))
         if times is None:
@@ -117,20 +128,22 @@ class TimeSeriesDataUtility:
         # X K time
         return(pn.melt(df, id_vars=['time'], value_name='X', var_name='K').sort_values(by=['time', 'K']))
     
-    
+    @staticmethod
     def plot_TK(dat, title="", legend=None, xlabels=None):
         tall_dat = TimeSeriesDataUtility.TK_to_tall(dat, times=xlabels)
         TimeSeriesDataUtility.plot_tall(dat=tall_dat,title=title,legend=legend)
     
+    @staticmethod
     def plot_tall(dat, title='', legend=None):
         columns = dat.loc[:, 'K'].unique()
         pdat = pn.DataFrame(data=TimeSeriesDataUtility.tall_to_TK(dat)['value'], columns=columns)
         pdat = pdat.set_index(np.round(dat.time.unique(), 5))
         fig, ax = subplots()
         if legend is not None:
-            ax.legend(legend);
+            ax.legend(legend)
         pdat.plot(title=title, ax=ax)
 
+    @staticmethod
     def plot_tall_old(dat, title='', legend=None):
         columns = dat.loc[:, 'K'].unique()
         pdat = pn.DataFrame(data=TimeSeriesDataUtility.tall_to_TK(dat)['value'], columns=columns)
@@ -139,13 +152,14 @@ class TimeSeriesDataUtility:
         xtickslocs = np.round(TimeSeriesDataUtility.tall_to_TK(dat)['times'], 5)
         pdat.plot(title=title, ax=ax)
         if legend is not None:
-            ax.legend(legend);
+            ax.legend(legend)
         nTicks = 20
         ticks = np.append(xtickslocs[0:-1:int(len(xtickslocs)/nTicks)], xtickslocs[-1])
         nTicks = len(ticks)
         ax.set_xticks(np.linspace(start=0, stop=len(xtickslocs), num=nTicks))    
         ax.set_xticklabels(ticks, rotation=90)    
     
+    @staticmethod
     def get_sample_file():
         return("~/Google Drive/BCCRC/simulated_wf_passage/K14_2017-05-28-14-54-31.996607.tsv")
 
