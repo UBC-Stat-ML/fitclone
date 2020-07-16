@@ -1,6 +1,7 @@
 import math
 import os
 import pandas as pn
+import numpy as np
 
 # Global Constants
 _TOLERATED_ZERO_PRECISION = 1e-20
@@ -10,10 +11,29 @@ exec(open('Utilities.py').read())
 exec(open('Models.py').read())
 exec(open('extended_wf_model.py').read())
 
+from Models import _TIME_ROUNDING_ACCURACY
+
+
+
 class ParticleGibbs(object):
     def __init__(self, N, T, K):
         # The N particles for T timepoints of K-dimensional states are kept in a 3 dimensional matrix part[N*T*K]
+        self.N = N
+        self.T = T
+        self.K = K
         self.particles = np.empty([N, T, K])
+        self.x = np.empty([self.N, self.T, self.K])
+        self.a = np.empty([self.N, self.T], dtype=int)
+        self.w = np.empty([self.N, self.T])
+        self.tau = 0
+        self.loglikelihood = np.empty([self.N, self.T])
+        self.Xi = np.empty([self.N, self.tau, self.K])
+        self.obs = {}
+        self.h = []
+
+
+
+
        
     def deb_assemble_particles(self, the_slice, t):
         deb_tau = the_slice.stop - the_slice.start + 1
@@ -97,6 +117,7 @@ class ParticleGibbs(object):
             b_result[self.T-t] = curr_index
         return([x_result, b_result])
         
+
 class PGAS(ParticleGibbs):
     # K dimensions (clones), T timepoints, and N particles
     def __init__(self, N, T, K, bridgeKernel, emissionDistribution, proposalDistribution, transitionDistribution, observations, h, rejuvenaion_prob=1, n_cores=0, disable_ancestor_bridge=False):
@@ -187,7 +208,6 @@ class PGAS(ParticleGibbs):
         self.w[:, 0] /= np.sum(self.w[:, 0])
         
         ## DEBUG
-        deb_list = [None]*1
         deb_bridge_counts = [None]*(self.T-1)
         
         # Resample, Propagate, Rejuvenate, Weighit
@@ -264,8 +284,6 @@ class PGAS(ParticleGibbs):
         return([x_final, x_full_final, deb_bridge_counts])
     
    
-
-
 class BlockedPGAS(PGAS):
     def __init__(self, N, T, K_prime, K, bridgeKernel, emissionDistribution, proposalDistribution, transitionDistribution, observations, h, rejuvenaion_prob=1, n_cores=0, disable_ancestor_bridge=False):
         """
@@ -422,8 +440,7 @@ class BlockedPGAS(PGAS):
         return([x_res_temp, X_full_res, deb_bridge_counts])
 
 
-# ## ParticleBridge kernel implementation
-
+## ParticleBridge kernel implementation
 class BridgeKernel():
     def __init__(self):
         print('')

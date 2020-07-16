@@ -3,10 +3,10 @@ import subprocess
 import time
 
 exec(open('scalable_computing.py').read())
-exec(open('pgas-dir.py').read())
+exec(open('pgas_dir.py').read())
 
 # Standard Prediction/Inference experiment
-class Bayesian_learning_exp(Experiment):
+class BayesianLearningExp(Experiment):
     def __init__(self):
         super().__init__()
         self.dat = None
@@ -25,7 +25,7 @@ class Bayesian_learning_exp(Experiment):
             print('Some error happened while trying to call Rscript {}'.format(e))
     
     def get_dependencies(self):
-        return(['scalable_computing.py', 'pgas-dir.py', 'experiments-prediction.py'])
+        return(['scalable_computing.py', 'pgas_dir.py', 'experiments-prediction.py'])
     
     def run_with_config_file(self, config_file):
         import time
@@ -110,9 +110,9 @@ class Bayesian_learning_exp(Experiment):
         xprime = pgas_sampler.generate_dummy_trajectory(self.learn_time)
         upper_s = 10
         lower_s = -10
-        theta_init_sampler = s_uniform_sampler(dim_max=upper_s, dim_min=lower_s, K=self.K)
+        theta_init_sampler = SUniform_Sampler(dim_max=upper_s, dim_min=lower_s, K=self.K)
 
-        adapted_theta_proposal = Random_walk_proposal(mu=np.array([0]*self.K), sigma=np.array(self.proposal_step_sigma), lower_bound = np.array([lower_s]*self.K), upper_bound=np.array([upper_s]*self.K))
+        adapted_theta_proposal = RandomWalk_Proposal(mu=np.array([0]*self.K), sigma=np.array(self.proposal_step_sigma), lower_bound = np.array([lower_s]*self.K), upper_bound=np.array([upper_s]*self.K))
         theta_sampler = MH_Sampler(adapted_proposal_distribution=adapted_theta_proposal, likelihood_distribution=f)
         fitness_learner = OutterPGAS(initial_distribution_theta=theta_init_sampler, initial_distribution_x=gp_sampler, observations=self.obs_inference, smoothing_kernel=pgas_sampler, parameter_proposal_kernel=theta_sampler, h=self.h, MCMC_in_Gibbs_nIter=self.MCMC_in_Gibbs_nIter)
         fitness_learner.sample_processor = Sample_processor(self.time_points_inference, self)
@@ -172,7 +172,7 @@ class Bayesian_learning_exp(Experiment):
 
         self._predict(xprime=None, theta_vector=res_theta, resume=resume)
         
-class TimingExp(Bayesian_learning_exp):
+class TimingExp(BayesianLearningExp):
     
     def _easy_submit(batch_name, mem_per_job=50, n_jobs=None, time_per_job=80*60, ncores=1, k=2, seed=2):
         expt = TimingExp()

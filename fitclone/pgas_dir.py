@@ -1,11 +1,12 @@
 import matplotlib.pyplot as plt
-from matplotlib.pyplot import *
+#from matplotlib.pyplot import *
 import matplotlib.ticker as mticker
 import math
 import os
 from time import time
 import pandas as pn
 import scipy as sp
+import numpy as np
 import scipy.stats
 import time as tm
 
@@ -14,14 +15,14 @@ _LLHOOD_INF_WARNING = False
 _TOLERATED_ZERO_PRECISION = 1e-20
 
 # Dependencies 
-exec(open('Utilities.py').read())
-exec(open('Models.py').read())
-exec(open('pgas.py').read())
+#exec(open('Utilities.py').read())
+#exec(open('Models.py').read())
+#exec(open('pgas.py').read())
 
+from Utilities import TimeSeriesDataUtility, time_string_from_seconds
+from pgas import ParticleGibbs
 
 from gp_llhood_parallel import *
-
-
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
 
@@ -34,12 +35,13 @@ class GP_sampler:
         Fit a GP to each dimension independently, 
         then extract alpha and beta, and finally expose a conditional normal with these parameters
         '''
-        self.T , self.K = dat.shape
+        self.T, self.K = dat.shape
         self.h = h
         self.epsilon = epsilon
         self.alpha = np.empty([self.K])
         self.beta = np.empty([self.K])
-        self.C = np.empty([self.T-1, self.K]) # T-1 by K (since \delta T-s are different potentially, i.e., the step size h is a vector)
+        # T-1 by K (since \delta T-s are different potentially, i.e., the step size h is a vector)
+        self.C = np.empty([self.T-1, self.K]) 
         self.sigma2 = np.empty([self.T-1, self.K])
         self.dat = dat
         self.obsTimes = obsTimes
@@ -60,7 +62,7 @@ class GP_sampler:
         gp = GaussianProcessRegressor(kernel=kernel, n_restarts_optimizer=nOptRestarts)
         gp.fit(t, x)
         alpha = gp.kernel_.get_params()['k1__constant_value']
-        beta = sqrt(gp.kernel_.get_params()['k2__length_scale'])
+        beta = math.sqrt(gp.kernel_.get_params()['k2__length_scale'])
         return([alpha, beta, gp])
         
     def sample_full_path(self, x0, h, time_length, tau):
@@ -91,7 +93,7 @@ class GP_sampler:
         sample_x = np.empty(x.shape)
         for k in range(K):
             mu = (self.C[t, k]/self.alpha[k]) * x[k]
-            scale = sqrt(self.sigma2[t, k]+self.epsilon)
+            scale = math.sqrt(self.sigma2[t, k]+self.epsilon)
             a, b = (0 - mu)/scale, (1 - mu)/scale
             sample_x[k] = sp.stats.truncnorm.rvs(loc=mu, scale=scale, size=1, a=a, b=b)
         
@@ -113,7 +115,7 @@ class GP_sampler:
         for k in range(K):
             mu = (self.C[t, k]/self.alpha[k]) * x_t[k]
             
-            loglikelihood += sp.stats.truncnorm.logpdf(x=x_M[k], loc=mu, scale=sqrt(self.sigma2[t, k]+self.epsilon), a=0, b=1)
+            loglikelihood += sp.stats.truncnorm.logpdf(x=x_M[k], loc=mu, scale=math.sqrt(self.sigma2[t, k]+self.epsilon), a=0, b=1)
             if math.isinf(loglikelihood) and _LLHOOD_INF_WARNING == True:
                 print('llhood is Inf!')
                 print('k is {}'.format(k))
@@ -132,12 +134,11 @@ class GP_sampler:
         for i in range(N):
             for k in range(K):
                 mu = (self.C[k]/self.alpha[k]) * X_t[i, k]
-                scale = sqrt(self.sigma2[k]+self.epsilon)
+                scale = math.sqrt(self.sigma2[k]+self.epsilon)
                 a, b = (0 - mu)/scale, (1 - mu)/scale
                 loglikelihood[i, k] = sp.stats.truncnorm.logpdf(x=x_M[k], loc=mu, scale=scale, a=a, b=b)
         return(np.sum(loglikelihood, axis=1)) 
-    
-    
+      
     def compute_loglikelihood_parallel(self, x_M, X_t, deltaT, llhood, n_cores=1, shuffle_map=None):
         the_C = np.empty(self.C.shape[1])
         the_sigma2 = np.empty(self.C.shape[1])
@@ -160,6 +161,7 @@ class GP_sampler:
     def plot_gp_dimension(self, k, M=1000):       
         t = self.obsTimes.reshape(-1, 1)
         x = self.dat[:, k].reshape(-1,1)
+        T = math.max(t)
         kernel = C(.1, (1e-5, 1e5)) * RBF(1.0, (1e-10, 1e5))
         gp = GaussianProcessRegressor(kernel=kernel, n_restarts_optimizer=50)
         gp.fit(t, x)
@@ -168,15 +170,14 @@ class GP_sampler:
         #%matplotlib inline
         plt.fill(np.concatenate([times, times[::-1]]), np.concatenate([y_pred - 1.9600 * sigma, (y_pred + 1.9600 * sigma)[::-1]]), alpha=.5, fc='b', ec='None', label='95% confidence interval')
 
-class tune_proposal(object):
+
+class TuneProposal(object):
     def __init__(self):
         print('')
     
     def tune(self):
         print('')
  
-
-
 
 class OutterPGAS(ParticleGibbs):
     def __init__(self, smoothing_kernel, parameter_proposal_kernel, initial_distribution_theta, initial_distribution_x, observations, h, MCMC_in_Gibbs_nIter=20):          
@@ -250,13 +251,10 @@ class OutterPGAS(ParticleGibbs):
         startTime = int(round(time()))
         llhood = -np.Inf
         
-        should_update_epsilon = False
-        original_epsilon = .01
-        waiting = 0
         for i in range(self._current_iter, nIter):
             endTime = int(round(time()))
             print('On iteration {}/{} --- OutterPGAS --- {} -- (llhood = {} )'.format(i+1, nIter, time_string_from_seconds(endTime-startTime), llhood))
-            _, self.x, n_passed = self.smoothing_kernel.sample_non_parallel(self.x.copy(), self.theta.copy())
+            _, self.x, _ = self.smoothing_kernel.sample_non_parallel(self.x.copy(), self.theta.copy())
             self.theta[:], llhood = self.p_theta.sample(nIter=self.MCMC_in_Gibbs_nIter, theta=self.theta.copy(), x=self.x[:,:].copy())
             
             # Write-down or otherwise process samples every so iterations
@@ -292,9 +290,7 @@ class OutterPGAS(ParticleGibbs):
         return(self.x)
     
 
-
-
-class Random_walk_proposal:
+class RandomWalk_Proposal:
     def __init__(self, mu, sigma, upper_bound, lower_bound):
         self.mu = mu
         self.sigma = sigma
@@ -334,17 +330,16 @@ class MH_Sampler:
         Even though the proposal is a random walk, since it may be truncated, we won't cancel them out
         x is the scaffold of discritised values
         """
-        theta_prime = theta
-        llhood_old_cache = None
+        theta_prime = theta        
         
         # Precompute sufficient statistics
         B_inv = self.l.compute_B_inv(x)
         for j in range(nIter):
             theta_new = self.phi.sample(theta_prime)
             # Don't re-compute llhood_old if it hsan't been rejected
-            llhood_old = self.l.compute_loglikelihood_cache_x(s=theta_prime, x=x, B_inv = B_inv);
+            llhood_old = self.l.compute_loglikelihood_cache_x(s=theta_prime, x=x, B_inv=B_inv)
             
-            llhood_new = self.l.compute_loglikelihood_cache_x(s=theta_new, x=x, B_inv = B_inv);
+            llhood_new = self.l.compute_loglikelihood_cache_x(s=theta_new, x=x, B_inv=B_inv)
             q_llhood = self.phi.compute_loglikelihood(loc=theta_new, value=theta_prime)
             q_llhood_reverse = self.phi.compute_loglikelihood(loc=theta_prime, value=theta_new)
             A = np.minimum(1.0, np.exp(llhood_new + q_llhood - llhood_old - q_llhood_reverse))
@@ -360,41 +355,7 @@ class MH_Sampler:
                 theta_prime = theta_new
         return([theta_prime, llhood_new])
     
-    def sample_risky(self, nIter, theta, x):
-        """
-        Even though the proposal is a random walk, since it may be truncated, we won't cancel them out
-        x is the scaffold of discritised values
-        """
-        theta_prime = theta
-        llhood_old_cache = None
-        for j in range(nIter):
-            theta_new = self.phi.sample(theta_prime)
-            # Don't re-compute llhood_old if it hsan't been rejected
-            if llhood_old_cache is None:
-                llhood_old = self.l.compute_loglikelihood(s=theta_prime, x=x);
-            else:
-                llhood_old = llhood_old_cache
-                
-            llhood_new = self.l.compute_loglikelihood(s=theta_new, x=x);
-  
-            A = np.minimum(1.0, np.exp(llhood_new-llhood_old))
-
-            if np.isnan(A):
-                print('MH acceptance probability is NaN!')
-                print('theta_new = {}, theta_prime = {}'.format(theta_new, theta_prime))
-                print('llhood_new={} + q_llhood={} - llhood_old={} - q_llhood_reverse={}'.format(llhood_new, q_llhood, llhood_old, q_llhood_reverse))
-                print(x)
-                raise ValueError('MH acceptance probability is NaN!')
-            
-            b = np.random.binomial(size=1, p=A, n=1)
-            if b == 1:
-                theta_prime = theta_new
-                llhood_old_cache = None
-            else:
-                llhood_old_cache = llhood_old
-            
-        return([theta_prime, llhood_new])
-    
+       
     def sample_hierarchical(self, nIter, theta, Xs):
         """
         Even though the proposal is a random walk, since it may be truncated, we won't cancel them out
@@ -409,12 +370,12 @@ class MH_Sampler:
             if llhood_old_cache is None:
                 llhood_old = 0.0
                 for x in Xs:
-                    llhood_old = llhood_old + self.l.compute_loglikelihood(s=theta_prime, x=x);
+                    llhood_old = llhood_old + self.l.compute_loglikelihood(s=theta_prime, x=x)
             else:
                 llhood_old = llhood_old_cache
             llhood_new = 0.0
             for x in Xs:
-                llhood_new = llhood_new + self.l.compute_loglikelihood(s=theta_new, x=x);
+                llhood_new = llhood_new + self.l.compute_loglikelihood(s=theta_new, x=x)
             q_llhood = self.phi.compute_loglikelihood(loc=theta_new, value=theta_prime)
             q_llhood_reverse = self.phi.compute_loglikelihood(loc=theta_prime, value=theta_new)
             A = np.minimum(1.0, np.exp(np.sum(np.array([llhood_new, q_llhood, -llhood_old, -q_llhood_reverse]))))
@@ -434,11 +395,12 @@ class MH_Sampler:
         return([theta_prime, llhood_new])
 
 
-class s_uniform_sampler:
+class SUniform_Sampler:
     def __init__(self, K, dim_min, dim_max):
         self.K = K
         self.min = dim_min
         self.max = dim_max
+        
     def sample(self):
         theta = np.empty([self.K])
         for i in range(self.K):

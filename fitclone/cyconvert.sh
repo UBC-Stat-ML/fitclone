@@ -2,7 +2,8 @@
 
 rm *.c
 rm -rf build 
-export cythonCC="gcc"
+#export cythonCC="gcc"
+export cythonCC="gcc-6"
 python3 setup_cython/setup.py build_ext --inplace
 python3 setup_cython/setup_gp.py build_ext --inplace
 python3 setup_cython/setup_epsilon.py build_ext --inplace

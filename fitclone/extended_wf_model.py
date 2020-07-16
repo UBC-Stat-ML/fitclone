@@ -1,34 +1,22 @@
 import os
-exec(open('Utilities.py').read())
-exec(open('Models.py').read())
+import numpy as np
+import scipy as sp
+import scipy.stats
+
+# exec(open('Utilities.py').read())
+#exec(open('Models.py').read())
 
 from blocked_gibbs_sample import *
 
-def sample_conditional_MVGD(mu, sigma, x, partition_size=2):
-    # randomly pick a
-    # sort mu and sigma such that a is at the end
-    # compute mu_bar and sigma_bar
-    # sort the result back 
-    K = x.shape[0]
-    shuffle_map = np.random.permutation(K)
-    x_shuffled = x[shuffle_map]
-    a = x_shuffled[(partition_size):K]
-    mu_shuffled = mu[shuffle_map]
-    sigma_shuffled = sigma[shuffle_map, ][:, shuffle_map]
-    mu_bar = compute_mu_bar(mu=mu_shuffled, sigma=sigma_shuffled, a=a)
-    sigma_bar = compute_sigma_bar(sigma=sigma_shuffled, a=a)
-    x_cond = sp.stats.multivariate_normal.rvs(mean=mu_bar, cov=np.matmul(sigma_bar, sigma_bar.T))
-    x_shuffled[0:partition_size] = x_cond
-    x_res = np.empty(x.shape)
-    for j in range(x_res.shape[0]):
-        x_res[shuffle_map[j]] = x_shuffled[j]
-    return(x_res)
+from Models import WrightFisherDiffusion, _TIME_ROUNDING_ACCURACY
+
 
 class ConditionalWrightFisherDisffusion(WrightFisherDiffusion):
     def __init__(self, K_prime, K, Ne, h):
         super().__init__(K, Ne, h)
         self.K_prime = K_prime
     
+    @staticmethod
     def _compute_mu_bar(mu, sigma, a):
         """
         We assume mu and sigam are sorted such that x2 is at the end and is the same length as a
@@ -44,6 +32,7 @@ class ConditionalWrightFisherDisffusion(WrightFisherDiffusion):
         mu_bar = mu_1 + np.matmul(np.matmul(sigma_12, np.linalg.pinv(sigma_22)), (a - mu_2))
         return(mu_bar)
     
+    @staticmethod
     def _compute_sigma2_bar(sigma, a):
         """
         We assume mu and sigam are sorted such that x2 is at the end and is the same length as a
@@ -65,13 +54,12 @@ class ConditionalWrightFisherDisffusion(WrightFisherDiffusion):
         n_particles, _, K = Xi.shape
         if deltaW is None:
             # So that h er
-            deltaW = np.random.normal(0, sqrt(self.h[t]), n_particles*tau*K).reshape([n_particles, tau, K])
-  
-            
+            deltaW = np.random.normal(0, math.sqrt(self.h[t]), n_particles*tau*K).reshape([n_particles, tau, K])
+   
         wf_blocked_gibbs_parallel_ss(tau=tau, X0=X0, time_length=time_length, s=s, h=self.h[t], Ne=self.Ne, Xi=Xi, A=A, x_out=x_out, n_threads=n_threads, deltaW=deltaW)
         
 
-    def _sample_conditional_MVGD(mu, sigma, x, partition_size=2):
+    def _sample_conditional_MVGD(self, mu, sigma, x, partition_size=2):
         # randomly pick a
         # sort mu and sigma such that a is at the end
         # compute mu_bar and sigma_bar
@@ -82,8 +70,8 @@ class ConditionalWrightFisherDisffusion(WrightFisherDiffusion):
         a = x_shuffled[(partition_size):K]
         mu_shuffled = mu[shuffle_map]
         sigma_shuffled = sigma[shuffle_map, ][:, shuffle_map]
-        mu_bar = self.compute_mu_bar(mu=mu_shuffled, sigma=sigma_shuffled, a=a)
-        sigma_bar = self.compute_sigma2_bar(sigma=sigma_shuffled, a=a)
+        mu_bar = self._compute_mu_bar(mu=mu_shuffled, sigma=sigma_shuffled, a=a)
+        sigma_bar = self._compute_sigma2_bar(sigma=sigma_shuffled, a=a)
         x_cond = sp.stats.multivariate_normal.rvs(mean=mu_bar, cov=sigma_bar)
         x_shuffled[0:partition_size] = x_cond
         x_res = np.empty(x.shape)

@@ -4,32 +4,44 @@ import numpy as np
 import scipy as sp
 import scipy.stats
 import math
+import pyximport
 
-exec(open('Utilities.py').read())
+# exec(open('Utilities.py').read())
+from Utilities import TimeSeriesDataUtility
+from pgas import _TOLERATED_ZERO_PRECISION
 
 from epsilon_ball_emission_parallel import *
 from epsilon_ball_posterior_parallel import *
+#from epsilon_ball_posterior_parallel import epsilon_ball_sample_posterior_parallel
 from wf_sample_parallel import *
 from gaussian_emission_parallel import *
+#from gaussian_emission_parallel import gaussian_emission_parallel
+from gp_llhood_parallel import *
 
 _TIME_ROUNDING_ACCURACY = 7
 
 
 class GenericDistribution:
-     def __init__(self):
-            self.data = 'hello'
+    def __init__(self):
+        self.data = ''
+        self.alpha = 0
+        self.epsilon = 0
+        self.x = 0
+        self.y = 0
+        self.loglikelihood = 0
+        self.b = 0
             
-     def sample(self):
+    def sample(self):
         print('this is a sample.')
         
-     def likelihood(self, rvs, observations):
+    def likelihood(self, rvs, observations):
         print('return observation.')
 
 
 
 class InformativeEmission(GenericDistribution):
     def __init__(self, alpha, epsilon, b=1):
-        super().__init__();
+        super().__init__()
         self.alpha = alpha
         self.epsilon = epsilon
         self.x = np.empty(len(alpha))
@@ -39,7 +51,7 @@ class InformativeEmission(GenericDistribution):
         
     def sample(self):
         """
-        Samples an x vector from Dirichlet anad then a Y vector from Unif(x+-\epsilon)
+        Samples an x vector from Dirichlet anad then a Y vector from Unif(x+-epsilon)
         """
         # Sample X from a Dirichlet distribution and then for each x_i, sample y_i from a Unif with \epsilon
         print('self.alpha = {}'.format(self.alpha))
@@ -173,19 +185,21 @@ class InformativeEmission(GenericDistribution):
     def compute_loglikelihood_parallel(self, X, y, t, loglikelihood, lambdaVal=10, n_cores=1):
         gaussian_emission_parallel(X=X, y=y, epsilon=self.epsilon, loglikelihood=loglikelihood, n_threads=n_cores)
     
+    @staticmethod
     def test():
         emission = InformativeEmission(alpha = [1]*4, epsilon=.05)
-        xprime = emission.sample_posterior(observation=[0.0657, .728, .095, .103], is_one_missing = False)
+        t = 1
+        xprime = emission.sample_posterior(observation=[0.0657, .728, .095, .103], t = t, is_one_missing = False)
         print("{} {}".format(xprime, np.sum(xprime)))
-        xprime = emission.sample_posterior(observation=[0.0657, .728, .095], is_one_missing = True)
+        xprime = emission.sample_posterior(observation=[0.0657, .728, .095], t = t, is_one_missing = True)
 
-        xprime = emission.sample_posterior(observation=[0.0657, .728, .095, .103])
+        xprime = emission.sample_posterior(observation=[0.0657, .728, .095, .103], t = 1)
         print(np.sum([0.0657, .728, .095, .103]))
         print(xprime)
         print(np.sum(xprime))
         sample_y = emission.sample()
         print(sample_y)
-        xpost = emission.sample_posterior(observation=sample_y['obs'])
+        xpost = emission.sample_posterior(observation=sample_y['obs'], t = t)
         print(np.sum(sample_y['obs']))
         print(sample_y['obs'])
         print(xpost)
@@ -195,7 +209,7 @@ class InformativeEmission(GenericDistribution):
 
         type(sample_y['x'])
         type(obs)
-        emission.compute_loglikelihood(params=sample_y['x'][0], observation=obs)
+        emission.compute_loglikelihood(params=sample_y['x'][0], observation=obs, t = t)
 
 
 
@@ -205,7 +219,7 @@ class DirMultEmission(GenericDistribution):
     Assumes that all observations will be in K-1 dimension, and the value of the last one is encoded in the N_total
     '''
     def __init__(self, N_total, alpha):
-        super().__init__();
+        super().__init__()
         self.alpha = np.array(alpha) # This has to have dimension one more than x and Y
         self.N_total = N_total  # Is a vector, one for each timepoint
         self.K = self.alpha.shape[0]-1
@@ -289,7 +303,6 @@ def div0(a, b):
         c[~np.isfinite(c)] = 0
     return c
 
-from math import *
 # A factory class to generate WF with desriable K
 class WrightFisherDiffusion(GenericDistribution):
     def __init__(self, K, Ne, h):        
@@ -299,6 +312,7 @@ class WrightFisherDiffusion(GenericDistribution):
         self.Ne = Ne
         self._ne_times_h = Ne*h[0]
     
+    @staticmethod
     def check_state(x):
         theSum = np.sum(x)
         if np.round(theSum, _TIME_ROUNDING_ACCURACY) > 1 or np.round(theSum, _TIME_ROUNDING_ACCURACY) < 0:
@@ -314,7 +328,8 @@ class WrightFisherDiffusion(GenericDistribution):
             print(x)
             raise ValueError('Potential underflow in the path.')
     
-    def check_path(x_path):
+    @staticmethod
+    def check_path(x_path: np.ndarray) -> None:
         theT = x_path.shape[0]
         for t in range(theT):
             try:
@@ -341,7 +356,7 @@ class WrightFisherDiffusion(GenericDistribution):
         Xi[0, ] = x0
         for step in range(1, tau+1):
             if deltaWs is None:
-                deltaW = np.random.normal(0, sqrt(self.h[0]), self.K)
+                deltaW = np.random.normal(0, math.sqrt(self.h[0]), self.K)
             else:
                 deltaW = deltaWs[step-1, :]
             _drift = WrightFisherDiffusion.compute_mu(x=Xi[step-1, ], s=self.s, K=self.K, _ne_times_h=self._ne_times_h)
@@ -360,6 +375,7 @@ class WrightFisherDiffusion(GenericDistribution):
 
         return([Xi[tau, ], -1.23, Xi[1:(tau), ]])
 
+    @staticmethod
     def compute_sigma(x, K):
         q = 1 - np.cumsum(x)
         q[q < 0] = 0
@@ -372,6 +388,7 @@ class WrightFisherDiffusion(GenericDistribution):
 
         return(B)
     
+    @staticmethod
     def compute_mu(x, s, K, _ne_times_h):
         _mu_fixed = -np.dot(x, s)
         return(np.multiply((_mu_fixed + s), _ne_times_h*x))
@@ -524,6 +541,7 @@ class WrightFisherDiffusion(GenericDistribution):
     def compute_sigma2(self, x):
         return(np.diag(x)-np.outer(x.T, x))
 
+    @staticmethod
     def set_np_seed():
         if seed is None:
             seed = int(np.random.uniform(0, 1, 1)*10000) 
@@ -539,7 +557,7 @@ class WrightFisherDiffusion(GenericDistribution):
         Xi[:, 0, :] = X0
         for step in range(1, tau+1):
             if deltaWs is None:
-                deltaW = np.random.normal(0, sqrt(self.h), N*self.K).reshape(N, self.K)
+                deltaW = np.random.normal(0, math.sqrt(self.h), N*self.K).reshape(N, self.K)
             else:
                 deltaW = deltaWs[:, step-1, :]
             x_l = Xi[:, step-1, :]
@@ -664,6 +682,7 @@ class WrightFisherDiffusion(GenericDistribution):
         return({'x':x_trajectory, 'obs':y})
     
     
+    @staticmethod
     def generate_full_sample_data(obs_num=5, silent=True, h = .001, selectionCoefficients=[.2, .3], end_time = .1, epsilon = None, x0=[.5, .4], Ne = 200, K=2, Dir_alpha=None, N_total=None):
         WF_diff_gen = WrightFisherDiffusion(h=h, K=K, Ne=Ne)
         
@@ -688,7 +707,7 @@ class WrightFisherDiffusion(GenericDistribution):
 
         return([y_gen_tall, x_gen_full_tall])
         
-    
+    @staticmethod
     def generate_sample_data(obs_num=5, silent=False, h = .001, selectionCoefficients=[.2, .3], end_time = .1, epsilon = .05, x0=[.5, .4], Ne = 200, K=2):
         WF_diff_gen = WrightFisherDiffusion(h=h, K=K, Ne=Ne)
         obsTimes = np.linspace(0, end_time, num=obs_num)

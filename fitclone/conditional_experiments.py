@@ -1,10 +1,26 @@
 import os
 import time
-exec(open('full_exp.py').read())
-exec(open('extended_wf_model.py').read())
+import numpy as np
+from random import random
+import yaml
+
+#exec(open('full_exp.py').read())
+#exec(open('extended_wf_model.py').read())
 
 
-class ConditionalBayesianLearning(Bayesian_learning_exp):
+from Utilities import MCMC_loader
+from Models import WrightFisherDiffusion, InformativeEmission, _TIME_ROUNDING_ACCURACY
+from extended_wf_model import ConditionalWrightFisherDisffusion
+from pgas_dir import GP_sampler, SUniform_Sampler, MH_Sampler, RandomWalk_Proposal, OutterPGAS
+from pgas import BlockedParticleBridgeKernel, BlockedPGAS
+from scalable_computing import Particle_processor, Sample_processor
+
+
+from conditional_experiments import BayesianLearningExp
+from Utilities import TimeSeriesDataUtility
+
+
+class ConditionalBayesianLearning(BayesianLearningExp):
 
     def _compute_one_step_h(self, time_points):
         h = np.empty([len(time_points), 1])
@@ -98,8 +114,8 @@ class ConditionalBayesianLearning(Bayesian_learning_exp):
         pgas_sampler.particle_processor = Particle_processor(time_points=self.time_points_inference, owner=self)                
         xprime = pgas_sampler.generate_dummy_trajectory(self.learn_time)
         lower_s = -.5
-        theta_init_sampler = s_uniform_sampler(dim_max=.5, dim_min=lower_s, K=self.K_prime)
-        adapted_theta_proposal = Random_walk_proposal(mu=np.array([0]*self.K_prime), sigma=np.array(self.proposal_step_sigma), lower_bound = np.array([lower_s]*self.K_prime), upper_bound=np.array([.5]*self.K_prime))
+        theta_init_sampler = SUniform_Sampler(dim_max=.5, dim_min=lower_s, K=self.K_prime)
+        adapted_theta_proposal = RandomWalk_Proposal(mu=np.array([0]*self.K_prime), sigma=np.array(self.proposal_step_sigma), lower_bound = np.array([lower_s]*self.K_prime), upper_bound=np.array([.5]*self.K_prime))
         theta_sampler = MH_Sampler(adapted_proposal_distribution=adapted_theta_proposal, likelihood_distribution=f)
         fitness_learner = OutterPGAS(initial_distribution_theta=theta_init_sampler, initial_distribution_x=gp_sampler, observations=self.obs_inference, smoothing_kernel=pgas_sampler, parameter_proposal_kernel=theta_sampler, h=self.h, MCMC_in_Gibbs_nIter=self.MCMC_in_Gibbs_nIter)
         fitness_learner.sample_processor = Sample_processor(self.time_points_inference, self)
