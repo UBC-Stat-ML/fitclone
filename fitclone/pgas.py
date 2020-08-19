@@ -3,16 +3,13 @@ import os
 import pandas as pn
 import numpy as np
 
-# Global Constants
-_TOLERATED_ZERO_PRECISION = 1e-20
 
 # Dependencies 
-exec(open('Utilities.py').read())
-exec(open('Models.py').read())
-exec(open('extended_wf_model.py').read())
+#exec(open('Utilities.py').read())
+#exec(open('Models.py').read())
+#exec(open('extended_wf_model.py').read())
 
-from Models import _TIME_ROUNDING_ACCURACY
-
+from Models import _TIME_ROUNDING_ACCURACY, _TOLERATED_ZERO_PRECISION
 
 
 class ParticleGibbs(object):
@@ -248,7 +245,7 @@ class PGAS(ParticleGibbs):
                 self.w[:, t] = np.exp(llhood_weights)
             
             # Report the number of particles that passed through
-            do_report = True
+            do_report = False
             if do_report is True:
                 ww1 = self.w[:,t]>0
                 ww2 = np.isfinite(self.w[:, t])
@@ -391,7 +388,8 @@ class BlockedPGAS(PGAS):
             ww2 = np.isfinite(self.w[:, t])
             ww3 = np.logical_and(ww1, ww2)
             dbc = np.sum(ww3)
-            print('# of particles passed through the epsilon ball = {}'.format(dbc))
+            if (dbc < ww1.shape[0]):
+                print('# of particles passed through the epsilon ball = {}'.format(dbc))
                 
             # Ensure weights sum to 1
             self.w[:, t] = self.w[:, t]/np.sum(self.w[:, t])   

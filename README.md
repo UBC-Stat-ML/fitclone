@@ -3,7 +3,7 @@
 Repository for methods used in paper:
 `Single cell fitness landscapes induced by genetic and pharmacologic perturbations in cancer`.
 
-BioRxive link here []
+[BioRxive link](https://www.biorxiv.org/content/10.1101/2020.05.08.081349v1)
 
 For `sitka` the Bayesian phylogenetic inference method see 
 [sitka](https://github.com/UBC-Stat-ML/nowellpack).

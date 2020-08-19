@@ -28,8 +28,8 @@ class BayesianLearningExp(Experiment):
             absolute_path = ''
             subprocess.call(["{}Rscript".format(absolute_path), "--vanilla", "time_series_driver_exp.R", self.out_path])
             #subprocess.call(["cat", '{}/{}'.format(self.out_path, 'predictsummary.yaml')])
-        except Exception as e:
-            print('Some error happened while trying to call Rscript {}'.format(e))
+        except Exception as ex:
+            print('Some error happened while trying to call Rscript {}'.format(ex))
     
     def get_dependencies(self):
         return(['scalable_computing.py', 'pgas_dir.py', 'experiments-prediction.py'])
