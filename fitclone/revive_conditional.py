@@ -261,6 +261,8 @@ class CondExp(ConditionalBayesianLearning):
         params['do_predict'] = [self.the_do_predict]
         params['one_step'] = [self.the_one_step]
         params['is_calibration'] = [self.calibration]
+        params['only_filter'] = [self.only_filter]
+        params['only_infer'] = [self.only_infer]
         # Conditional Blocked Gibbs sampler (size of the block update)
         # How many trajectories are updated at the same time...
         params['K'] = [self.the_block_size]
@@ -275,10 +277,11 @@ class CondExp(ConditionalBayesianLearning):
 
     def logic(self, resume):
         self._load_data(resume)
-        _, _ = self._infer(resume)
+        if self.only_filter is False:
+            _, _ = self._infer(resume)
         res_theta = TimeSeriesDataUtility.read_time_series(
             self.inference_theta_file_path).values
-        if self.is_calibration is False:
+        if self.is_calibration is False and self.only_infer is False:
             self._predict(xprime=None, theta_vector=res_theta, resume=resume)
 
 

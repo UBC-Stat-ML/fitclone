@@ -34,13 +34,13 @@ class BayesianLearningExp(Experiment):
     def get_dependencies(self):
         return(['scalable_computing.py', 'pgas_dir.py', 'experiments-prediction.py'])
     
-    def run_with_config_file(self, config_file):
+    def run_with_config_file(self, config_file, resume=False):
         import time
         self.config_file = os.path.expanduser(config_file)
         stream = open(self.config_file, "r")
         doc = yaml.load(stream)
         print(doc)
-        return(self.run(doc))
+        return(self.run(doc, resume=resume))
     
     def _compute_one_step_h(self, time_points):
         h = np.empty([len(time_points), 1])

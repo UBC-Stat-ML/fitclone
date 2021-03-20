@@ -508,7 +508,6 @@ class ParticleBridgeKernel(BridgeKernel, ParticleGibbs):
                 
             # Propagate particles; e.g., using the WrightFisherDistribution
             self.f.sample_parallel(X0=self.x[self.a[0:self.N, t], t-1,:], t = obs_index, time_length=h, selection_coeffs=self.theta, seed=1, Xi=self.dummy, x_out=self.x[:, t, :], n_threads=self.n_cores)
-                
             
             # Weighting
             deltaT = time_length - h*t

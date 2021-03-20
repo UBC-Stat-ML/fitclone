@@ -267,4 +267,4 @@ class CondExp(ConditionalBayesianLearning):
         res_theta = TimeSeriesDataUtility.read_time_series(
             self.inference_theta_file_path).values
 
-        self._predict(xprime=None, theta_vector=res_theta, resume=resume)
+        self._predict(xprime = None, theta_vector = res_theta, resume = resume)
