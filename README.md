@@ -1,12 +1,9 @@
 # fitClone
 
-Repository for methods used in paper:
-`Single cell fitness landscapes induced by genetic and pharmacologic perturbations in cancer`.
+`fitClone` is a Bayesian probabilistic framework that ascribes quantitative selection coefficients to individual cancer clones and forecasts competitive clonal dynamics over time. This method is used in `Salehi, Sohrab, et al. "Clonal fitness inferred from time-series modelling of single-cell cancer genomes." Nature (2021): 1-6.`
 
-BioRxive link here []
-
-For `sitka` the Bayesian phylogenetic inference method see 
-[sitka](https://github.com/UBC-Stat-ML/nowellpack).
+For `Sitka` the Bayesian phylogenetic inference method please see our preprint on BioRxiv:
+[Cancer phylogenetic tree inference at scale from 1000s of single cell genomes](https://www.biorxiv.org/content/10.1101/2020.05.06.058180v2).
 
 
 `fitClone` is a Bayesian framework for inference in timeseries clonal abundance observations.
@@ -15,22 +12,31 @@ It is an implementation of the Wright-Fisher diffusion process. It simultaneousl
 
 ## Installation
 
-`fitClone` needs Python3 to be installed. We recommend using a conda installation.
+`fitClone` requires Python3 to be installed. We recommend using a conda installation.
 It uses `Cython` and requires `openMP` to compile.
 
-``` bash
-# install requirements
-conda install -c anaconda hdf5
-conda install -c conda-forge gcc
-conda install -c anaconda cython
+Also, highly recommand installation in a new conda environment. 
+```
+conda create --name fitness
+conda activate fitness
+```
 
-# compile the cythonized files
-./cyconvert.sh 
+Then proceed with installation:
+
+``` bash
+# Install the requirements
+chmod +x make.sh
+./make.sh
 
 # run an example
 chmox +x fitclone.py 
 ./fitclone.py
 ```
+
+**Note**
+
+With OSX Big Sure you may encounter issues with openMP. We've included a `cyconvert_bigsur.sh` that sets the compiler and linker directories for gcc. 
+To use it, replace the last line in `make.sh` with `./cyconvert_bigsur.sh`.
  
 ## Inputs
 To run `fitClone` two prepare two inputs
@@ -103,7 +109,11 @@ At each time `t`, the sum of clonal fractions has to be between zero and one.
 
 ``` yaml
 
-config.yaml: an augmented copy of the config file used to run fitClone along with a few the runtimeinfer_theta.tsv.gz: the posterior of selection coefficientsinfer_x.tsv.gz: the posterior of imputed trajectoriesllhood_theta.tsv.gz: the likelihoodspredict.tsv.gz: the predicted trajectories if do_predict = 1
+config.yaml: an augmented copy of the config file used to run fitClone along with a few the runtime
+infer_theta.tsv.gz: the posterior of selection coefficients
+infer_x.tsv.gz: the posterior of imputed trajectories
+llhood_theta.tsv.gz: the likelihoods
+predict.tsv.gz: the predicted trajectories if do_predict = 1
 ```
 Moreover if `Rscript` is available, it will produce some summary plots in the `plots`.
 
