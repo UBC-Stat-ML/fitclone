@@ -5,7 +5,8 @@ from distutils.core import setup
 from Cython.Build import cythonize
 import numpy
 import os
-#os.environ["CC"] = "gcc"
+
+
 os.environ["CC"] = os.environ["cythonCC"]
 ext_modules = [
     Extension(

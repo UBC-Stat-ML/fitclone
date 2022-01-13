@@ -524,7 +524,7 @@ plot_all_for_exp_path <- function(exp_path, burn_in_fraction=.10, thinning=1, ig
         is_mults = FALSE
         if (!is.null(mcmc_options$multinomial_error)) is_mults = mcmc_options$multinomial_error
           
-        if (!is.null(mcmc_options$observation_model) | mcmc_options$multinomial_error) {
+        if (!is.null(mcmc_options$observation_model) | is.null(mcmc_options$multinomial_error)) {
           #if (mcmc_options$observation_model %in% c('dir_mult', 'mult') ) {
           dat = wf.count.2.freq(dat, N=mcmc_options$Y_sum_total)
           #}
